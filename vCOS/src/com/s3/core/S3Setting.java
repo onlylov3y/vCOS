@@ -9,7 +9,7 @@ public class S3Setting {
 	
 	private static String accessKey = "";
 	private static String secretKey = "";
-	private static String endPoint = "http://";
+	private static String endPoint = "http://s1.cloudstorage.com.vn:9020";
 
 	public static String getAccessKey() {
 		return accessKey;

@@ -1,7 +1,5 @@
 package com.s3.core;
 
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
@@ -12,8 +10,6 @@ import com.amazonaws.services.s3.AmazonS3Client;
 import com.amazonaws.services.s3.S3ClientOptions;
 import com.amazonaws.services.s3.model.AmazonS3Exception;
 import com.amazonaws.services.s3.model.Bucket;
-import com.amazonaws.services.s3.model.BucketCrossOriginConfiguration;
-import com.amazonaws.services.s3.model.CORSRule;
 import com.amazonaws.services.s3.model.ObjectListing;
 import com.amazonaws.services.s3.model.S3ObjectSummary;
 
@@ -94,105 +90,4 @@ public class S3BucketManagerment {
 		s3Client.deleteBucket(bucketName);
 		System.out.println("Deleted " + bucketName);
 	}
-
-	/**
-	 * Add a new rule with origin rules
-	 */
-	public void addCorsRules(String bucketName, String ruleName, List<String> allowedOrigins, 
-			List<String> allowedMethods, List<String> exposedHeaders, int maxAgeSeconds) {
-		CORSRule rule = new CORSRule().withId(ruleName);
-		if(allowedOrigins == null) {
-			System.err.println("AllowedOrigins field must be not null.");
-			return;
-		}
-		rule.withAllowedOrigins(allowedOrigins);
-		// Create CORS rules.
-		List<CORSRule.AllowedMethods> methodRule = new ArrayList<CORSRule.AllowedMethods>();
-		if (allowedMethods != null) {
-			for (String method : allowedMethods) {
-				try {
-					methodRule.add(CORSRule.AllowedMethods.valueOf(method.toUpperCase()));
-				} catch (Exception e) {
-					continue;
-				}
-			}
-			rule.withAllowedMethods(methodRule);
-		}
-		if(exposedHeaders != null)
-			rule.withExposedHeaders(exposedHeaders);
-		if(maxAgeSeconds != 0)
-			rule.withMaxAgeSeconds(maxAgeSeconds);
-		//Set rule
-		BucketCrossOriginConfiguration configuration = new BucketCrossOriginConfiguration();
-		List<CORSRule> originRule = s3Client.getBucketCrossOriginConfiguration(bucketName).getRules();
-		originRule.add(rule);
-		configuration.setRules(originRule);
-		// Add the configuration to the bucket.
-		s3Client.setBucketCrossOriginConfiguration(bucketName, configuration);
-	}
-	
-	/**
-	 * Override the origin rules
-	 */
-	public void setCorsRules(String bucketName, String ruleName, List<String> allowedOrigins, 
-			List<String> allowedMethods, List<String> exposedHeaders, int maxAgeSeconds) {
-		CORSRule rule = new CORSRule().withId(ruleName);
-		if(allowedOrigins == null) {
-			System.err.println("AllowedOrigins field must be not null.");
-			return;
-		}
-		rule.withAllowedOrigins(allowedOrigins);
-		// Create CORS rules.
-		List<CORSRule.AllowedMethods> methodRule = new ArrayList<CORSRule.AllowedMethods>();
-		if (allowedMethods != null) {
-			for (String method : allowedMethods) {
-				try {
-					methodRule.add(CORSRule.AllowedMethods.valueOf(method.toUpperCase()));
-				} catch (Exception e) {
-					continue;
-				}
-			}
-			rule.withAllowedMethods(methodRule);
-		}
-		if(exposedHeaders != null)
-			rule.withExposedHeaders(exposedHeaders);
-		if(maxAgeSeconds != 0)
-			rule.withMaxAgeSeconds(maxAgeSeconds);
-		//Set rule
-		BucketCrossOriginConfiguration configuration = new BucketCrossOriginConfiguration();
-		configuration.setRules(Arrays.asList(rule));
-		// Add the configuration to the bucket.
-		s3Client.setBucketCrossOriginConfiguration(bucketName, configuration);
-	}
-	
-	/**
-	 * Delete the origin rules
-	 */
-	public void deleteCorsRules(String bucketName) {
-		s3Client.deleteBucketCrossOriginConfiguration(bucketName);
-	}
-	
-	public void getBucketCrossOrigin(String bucketName) {
-		BucketCrossOriginConfiguration configuration = new BucketCrossOriginConfiguration();
-		// Retrieve
-		configuration = s3Client.getBucketCrossOriginConfiguration(bucketName);
-		printCORSConfiguration(configuration);
-	}
-	
-	private static void printCORSConfiguration(BucketCrossOriginConfiguration configuration) {
-        if (configuration == null) {
-            System.out.println("Configuration is null.");
-        } else {
-            System.out.println("Configuration has " + configuration.getRules().size() + " rules\n");
-
-            for (CORSRule rule : configuration.getRules()) {
-                System.out.println("Rule ID: " + rule.getId());
-                System.out.println("MaxAgeSeconds: " + rule.getMaxAgeSeconds());
-                System.out.println("AllowedMethod: " + rule.getAllowedMethods());
-                System.out.println("AllowedOrigins: " + rule.getAllowedOrigins());
-                System.out.println("AllowedHeaders: " + rule.getAllowedHeaders());
-                System.out.println("ExposeHeader: " + rule.getExposedHeaders());
-            }
-        }
-    }
 }
