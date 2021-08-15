@@ -13,13 +13,13 @@ import com.amazonaws.services.s3.model.Grantee;
 import com.amazonaws.services.s3.model.GroupGrantee;
 import com.amazonaws.services.s3.model.Permission;
 
-public class S3BucketAcl {
+public class S3Acl {
 	
 	@SuppressWarnings("unused")
 	private final S3Setting s3Setting;
 	private final AmazonS3Client s3Client;
 
-	public S3BucketAcl() {
+	public S3Acl() {
 		s3Setting = new S3Setting();
 		s3Client = new AmazonS3Client(new BasicAWSCredentials(S3Setting.getAccessKey(), S3Setting.getSecretKey()));
 		s3Client.setEndpoint(S3Setting.getEndPoint());
@@ -37,7 +37,28 @@ public class S3BucketAcl {
 		}
 	}
 	
+	public AccessControlList getObjectAcl(String bucketName, String key) {
+		try {
+			return s3Client.getObjectAcl(bucketName, key);
+		} catch (Exception e) {
+			System.err.println("Error: " + e.getMessage());
+			return null;
+		}
+	}
+	
 	public void showBucketAcl(AccessControlList accessControlList) {
+		if(accessControlList == null) {
+			System.out.println("AccessControlList is null.");
+			return;
+		}
+		System.out.println(accessControlList.toString());
+		for(Grant g : accessControlList.getGrants()) {
+			System.out.println(g.getGrantee() + " : " + g.getPermission());
+		}
+		System.out.println("============end list=============");
+	}
+	
+	public void showObjectAcl(AccessControlList accessControlList) {
 		if(accessControlList == null) {
 			System.out.println("AccessControlList is null.");
 			return;
@@ -95,6 +116,54 @@ public class S3BucketAcl {
         bucketAcl.setOwner(s3Client.getS3AccountOwner());
         //showBucketAcl(bucketAcl);
         s3Client.setBucketAcl(bucketName, bucketAcl);
+	}
+	
+	/**
+	 * This class for authenticazed for object 
+	 * 0 none
+	 * 1 read
+	 * 2 read Acp
+	 * 4 write
+	 * 8 write Acp
+	 * 15 Full
+	 * The first number be for user owner
+	 * The second number be for ASW groups (access log)
+	 * The latest number be for other user
+	 */
+	
+	public void setObjectAcl(String bucketName, String key, String permission) {
+		// Create a collection of grants to add to the bucket.
+        ArrayList<Grant> grantCollection = new ArrayList<Grant>();
+        String [] permissionAr = null;
+        if(permission.contains(","))
+        	permissionAr = permission.split(",");
+        else if(permission.contains("-"))
+        	permissionAr = permission.split("-");
+        else if(permission.contains("/"))
+        	permissionAr = permission.split("/");
+        if(permissionAr == null || permissionAr.length < 3) {
+        	System.err.println("The permission format is error. Please add ',' or '-' or '/' for each owner/AWSgroup/other user."
+							+ "\nExample: 15-0-1 mean set full permisson for owner, non-permission for AWS group, read for other user. ");
+			return;
+		}
+		// Grant the account owner full control.
+		int ownerP = Integer.parseInt(permissionAr[0]);
+		if (ownerP != 0)
+			grantCollection.addAll(parsePermission(new CanonicalGrantee(s3Client.getS3AccountOwner().getId()), ownerP));
+		// Grant the LogDelivery group permission to write to the bucket.
+		int LogDeliveryP = Integer.parseInt(permissionAr[1]);
+		if (LogDeliveryP != 0)
+			grantCollection.addAll(parsePermission(GroupGrantee.AuthenticatedUsers, LogDeliveryP));
+		// Grant the other(ALL) user
+		int allP = Integer.parseInt(permissionAr[2]);
+		if (allP != 0)
+			grantCollection.addAll(parsePermission(GroupGrantee.AllUsers, allP));
+
+		AccessControlList bucketAcl = new AccessControlList();
+        bucketAcl.grantAllPermissions(grantCollection.toArray(new Grant[0]));
+        bucketAcl.setOwner(s3Client.getS3AccountOwner());
+        //showBucketAcl(bucketAcl);
+        s3Client.setObjectAcl(bucketName, key, bucketAcl);
 	}
 	
 	/**

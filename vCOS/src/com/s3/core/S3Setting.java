@@ -7,8 +7,8 @@ public class S3Setting {
 	 * This info from file, user input,...
 	 */
 	
-	private static String accessKey = "";
-	private static String secretKey = "";
+	private static String accessKey = "test";
+	private static String secretKey = "MSBjhTwZppEtnXWm5CGcSART8dob3redIfaynz0R";
 	private static String endPoint = "http://s1.cloudstorage.com.vn:9020";
 
 	public static String getAccessKey() {

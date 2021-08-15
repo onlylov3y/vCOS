@@ -1,18 +1,15 @@
 package com.s3.core;
 
-import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
-import java.util.Set;
 
 import com.amazonaws.auth.BasicAWSCredentials;
 import com.amazonaws.services.s3.AmazonS3Client;
 import com.amazonaws.services.s3.S3ClientOptions;
 import com.amazonaws.services.s3.model.AmazonS3Exception;
 import com.amazonaws.services.s3.model.Bucket;
-import com.amazonaws.services.s3.model.ObjectListing;
-import com.amazonaws.services.s3.model.S3ObjectSummary;
-
+import com.amazonaws.services.s3.model.ListMultipartUploadsRequest;
+import com.amazonaws.services.s3.model.MultipartUpload;
+import com.amazonaws.services.s3.model.MultipartUploadListing;
 public class S3BucketManagerment {
 
 	@SuppressWarnings("unused")
@@ -33,30 +30,6 @@ public class S3BucketManagerment {
 
 	public List<Bucket> getListBucket() {
 		return s3Client.listBuckets();
-	}
-
-	public void getListBucketRecursion() {
-		List<Bucket> buckets = getListBucket();
-		for (Bucket b : buckets) {
-			getListBucketRecursion(b.getName());
-		}
-	}
-
-	public Set<String> getListBucketRecursion(String bucketName) {
-		Set<String> listBucketRecursion = new HashSet<String>();
-		ObjectListing objectListing = null;
-		try {
-			objectListing = s3Client.listObjects(bucketName);
-		} catch (Exception e) {
-			System.err.println(e.getMessage());
-			return null;
-		}
-		Iterator<?> iterator = objectListing.getObjectSummaries().iterator();
-		while (iterator.hasNext()) {
-			S3ObjectSummary summary = (S3ObjectSummary) iterator.next();
-			listBucketRecursion.add(bucketName + "/" + summary.getKey());
-		}
-		return listBucketRecursion;
 	}
 
 	public Bucket getBucket(String bucketName) {
@@ -90,4 +63,24 @@ public class S3BucketManagerment {
 		s3Client.deleteBucket(bucketName);
 		System.out.println("Deleted " + bucketName);
 	}
+	
+	public void listMultipartUploads(String bucketName) {
+		try {
+			// Retrieve a list of all in-progress multipart uploads.
+			ListMultipartUploadsRequest allMultipartUploadsRequest = new ListMultipartUploadsRequest(bucketName);
+			MultipartUploadListing multipartUploadListing = s3Client.listMultipartUploads(allMultipartUploadsRequest);
+			List<MultipartUpload> uploads = multipartUploadListing.getMultipartUploads();
+
+			// Display information about all in-progress multipart uploads.
+			System.out.println(uploads.size() + " multipart upload(s) in progress.");
+			for (MultipartUpload u : uploads) {
+				System.out.println("Upload in progress: Key = \"" + u.getKey() + "\", id = " + u.getUploadId());
+			}
+		} catch (Exception e) {
+			System.err.println(e.getMessage());
+		}
+
+	}
+	
 }
+

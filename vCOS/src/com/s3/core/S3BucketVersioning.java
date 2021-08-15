@@ -22,22 +22,28 @@ public class S3BucketVersioning {
 	}
 	
 	public void getBucketVersioning(String bucketName) {
+		getBucketVersioning(bucketName, null);
+	}
+	
+	public void getBucketVersioning(String bucketName, String prefixPath) {
 		ListVersionsRequest request = new ListVersionsRequest()
 				.withBucketName(bucketName)
-				.withMaxResults(2);
-		VersionListing versionListing = s3Client.listVersions(request);
+				.withMaxResults(10);
+		VersionListing versionListing;
+		if(prefixPath == null)
+			versionListing = s3Client.listVersions(request);
+		else 
+			versionListing = s3Client.listVersions(bucketName, prefixPath);
+		
 		int numVersions = 0, numPages = 0;
         while (true) {
             numPages++;
-            for (S3VersionSummary objectSummary :
-                    versionListing.getVersionSummaries()) {
+            for (S3VersionSummary objectSummary : versionListing.getVersionSummaries()) {
                 System.out.printf("Retrieved object %s, version %s\n",
                         objectSummary.getKey(),
                         objectSummary.getVersionId());
                 numVersions++;
             }
-            // Check whether there are more pages of versions to retrieve. If
-            // there are, retrieve them. Otherwise, exit the loop.
             if (versionListing.isTruncated()) {
                 versionListing = s3Client.listNextBatchOfVersions(versionListing);
             } else {

@@ -11,5 +11,6 @@
 	<classpathentry kind="lib" path="lib/jackson-core-2.3.2.jar"/>
 	<classpathentry kind="lib" path="lib/jackson-databind-2.3.2.jar"/>
 	<classpathentry kind="lib" path="lib/joda-time-2.2.jar"/>
+	<classpathentry kind="lib" path="lib/commons-io-2.11.0/commons-io-2.11.0.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

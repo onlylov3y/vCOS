@@ -13,14 +13,17 @@ import com.amazonaws.services.s3.model.Bucket;
 import com.amazonaws.services.s3.model.BucketLifecycleConfiguration;
 import com.amazonaws.services.s3.model.BucketLifecycleConfiguration.Rule;
 import com.amazonaws.services.s3.model.BucketLifecycleConfiguration.Transition;
+import com.amazonaws.services.s3.model.DeleteObjectsRequest.KeyVersion;
+import com.amazonaws.services.s3.model.MultipartUpload;
 import com.amazonaws.services.s3.model.S3ObjectSummary;
 import com.amazonaws.services.s3.model.StorageClass;
-import com.s3.core.S3BucketAcl;
+import com.s3.core.S3Acl;
 import com.s3.core.S3BucketCors;
 import com.s3.core.S3BucketManagerment;
 import com.s3.core.S3BucketPolicy;
 import com.s3.core.S3BucketVersioning;
 import com.s3.core.S3LifecycleConfiguration;
+import com.s3.core.S3MultipartManager;
 import com.s3.core.S3ObjectManagerment;
 
 public class AppSample {
@@ -32,18 +35,15 @@ public class AppSample {
 
 		System.out.println("Putting bucket " + bucketName);
 		s3BucketManagerment.putBucket(bucketName);
+//		//list Multipart Uploads
+//		s3BucketManagerment.listMultipartUploads(bucketName);
 //
+//		//List Bucket
 //		for (Bucket b : s3BucketManagerment.getListBucket()) {
 //			System.out.println(b.getName());
 //		}
 //		System.out.println("Deleting bucket " + bucketName);
 //		s3BucketManagerment.deleteBucket(bucketName);
-
-		// listBucketRecursions
-		Set<String> listBucketRecursions = s3BucketManagerment.getListBucketRecursion(bucketName);
-		for (String bName : listBucketRecursions) {
-			System.out.println(bName);
-		}
 		
 		
 //		//Test Cors
@@ -67,7 +67,7 @@ public class AppSample {
 
 		
 //		//Test Acl
-//		S3BucketAcl s3BucketAcl = new S3BucketAcl();
+//		S3Acl s3BucketAcl = new S3Acl();
 //		//set permisson
 //		s3BucketAcl.setBucketAcl(bucketName, "15,0,1");
 //		//set permission for an account by user. Error due to only supporting for pro.
@@ -118,16 +118,73 @@ public class AppSample {
 //		//delete policy
 //		s3BucketPolicy.deleteBucketPolicy(bucketName);
 		
-		//test BucketVersioning
-		S3BucketVersioning s3BucketVersioning = new S3BucketVersioning();
-		s3BucketVersioning.getBucketVersioning(bucketName);
+//		//test BucketVersioning
+//		S3BucketVersioning s3BucketVersioning = new S3BucketVersioning();
+//		s3BucketVersioning.getBucketVersioning(bucketName);
+//		//String prefixPath = "New Folder/DPI team.jpg";
+//		//s3BucketVersioning.getBucketVersioning(bucketName, prefixPath);
 		
 		
+		System.out.println("Testing with object....");
+		S3ObjectManagerment s3ObjectManagerment = new S3ObjectManagerment();
+		String key = "New Folder2/TRUNG.jpg";
+		// listObjectRecursions
+		Set<String> listObjectRecursions = s3ObjectManagerment.getListObjectRecursion(bucketName);
+		// listObjectRecursions from key
+ 		//Set<String> listObjectRecursions = s3ObjectManagerment.getListObjectRecursion(bucketName, "New Folder2/");
+		for (String oName : listObjectRecursions) {
+			System.out.println(oName);
+		}
 		
-//		System.out.println("Testing with object....");
-//		S3ObjectManagerment s3ObjectManagerment = new S3ObjectManagerment();
-//		s3ObjectManagerment.deleteObject("thangdv123", "New Folder/folder2/TRUNG.jpg");
-//		//s3ObjectManagerment.deleteAllObjectsFromBucket(bucketName);
+//		//test get object
+//		String outputPath = "E:\\vCOS\\vCOS\\data\\TRUNG.jpg";
+//		s3ObjectManagerment.getObject(bucketName, key, outputPath);
+		
+//		//test put object
+//		String inputPath = "E:\\vCOS\\vCOS\\data\\avatar.jpg";
+//		key = "New Folder2/avatar.jpg";
+//		s3ObjectManagerment.putObject(bucketName, key, inputPath);
 
+//		//Delete an object
+//		s3ObjectManagerment.deleteObject("thangdv123", "New Folder/folder2/TRUNG.jpg");
+		
+//		//Delete all objects
+//		//s3ObjectManagerment.deleteAllObjectsFromBucket(bucketName);
+		
+//		//Delete objects by  versions
+//		List<KeyVersion> objectKeys = new ArrayList<KeyVersion>();  
+//		objectKeys.add(new KeyVersion(key));
+//		objectKeys.add(new KeyVersion("New Folder2/avatar.jpg"));
+//		s3ObjectManagerment.deleteObjects(bucketName, objectKeys);
+		
+//		//copy object
+//		String key1 = "New Folder2/TRUNG.jpg";
+//		String newKey = "folder3/TRUNG1234.jpg";
+//		s3ObjectManagerment.copyObjectSameBucket(key, bucketName, newKey);
+//		s3ObjectManagerment.copyObject(key1, "thangdv123", "thangdv", newKey);	
+			
+//		//Test object Acl
+//		S3Acl s3ObjectAcl = new S3Acl();
+//		//set permisson
+//		s3ObjectAcl.setObjectAcl(bucketName, key, "15,15,15");
+//		//set permission for an account by user. Error due to only supporting for pro.
+//		//s3BucketAcl.setBucketAcl(bucketName, "thangdc@viettelidc.com.vn", 1);
+//		//show permission 
+//		s3ObjectAcl.showObjectAcl(s3ObjectAcl.getObjectAcl(bucketName, key));
+		
+		//Test multipart jobs
+		S3MultipartManager s3Multipart = new S3MultipartManager();
+		List<MultipartUpload> uploads = s3Multipart.listMultipartUploads(bucketName);
+		System.out.println(uploads.size() + " multipart upload(s) in progress.");
+        for (MultipartUpload u : uploads) {
+            System.out.println("Upload in progress: Key = \"" + u.getKey() + "\", id = " + u.getUploadId());
+            if(u.getKey().contains(".exe"))
+            	s3Multipart.abortMultipart(bucketName, u.getKey(), u.getUploadId());
+        }
+        //test upload multipart
+        String keyName = "New Folder2/hyaha.jpg";
+        String filePath = "E:\\vCOS\\vCOS\\data\\avatar.jpg";
+        s3Multipart.multipartUpload(bucketName, keyName, filePath);
+        
 	}
 }

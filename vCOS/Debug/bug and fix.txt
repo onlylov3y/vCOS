@@ -1,0 +1,7 @@
+1. For BucketAcl. AccessControlList need set Owner into request.
+
+AccessControlList bucketAcl = new AccessControlList();
+bucketAcl.grantAllPermissions(grantCollection.toArray(new Grant[0]));
+bucketAcl.setOwner(s3Client.getS3AccountOwner());
+
+2.
